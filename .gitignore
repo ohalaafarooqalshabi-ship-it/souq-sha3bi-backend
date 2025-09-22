@@ -1,0 +1,30 @@
+# Node modules
+node_modules/
+
+# Expo / React Native
+.expo/
+.expo-shared/
+web-build/
+
+# Databases / secrets
+*.db
+*.sqlite
+db.js
+users.db
+ads.db
+
+# Build / OS
+.DS_Store
+dist/
+build/
+
+# wasm and big files
+sql-wasm.wasm
+
+# env / secret files
+.env
+.env.local
+
+# Editors
+.vscode/
+.idea/
