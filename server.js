@@ -4,31 +4,40 @@
   - Auth: JWT
   - Owner info embedded
 */
-const express = require('express');
-const Datastore = require('@seald-io/nedb');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const cors = require('cors');
-const path = require('path');
+
+const express = require("express");
+const Datastore = require("@seald-io/nedb");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const cors = require("cors");
+const path = require("path");
+const multer = require("multer");
 
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// قواعد البيانات
+// =================== قواعد البيانات ===================
 const DATA_DIR = __dirname;
-const usersDB = new Datastore({ filename: path.join(DATA_DIR, 'users.db'), autoload: true });
-const adsDB = new Datastore({ filename: path.join(DATA_DIR, 'ads.db'), autoload: true });
+const usersDB = new Datastore({
+  filename: path.join(DATA_DIR, "users.db"),
+  autoload: true,
+});
+const adsDB = new Datastore({
+  filename: path.join(DATA_DIR, "ads.db"),
+  autoload: true,
+});
 
-// معلومات التطبيق / المالك
+// =================== معلومات التطبيق / المالك ===================
 const APP_NAME = "السوق الشعبي";
 const OWNER_NAME = "علاء فاروق سيف علوان الشعبي";
 const OWNER_PHONE = "777268793";
+const ADMIN_USER = "ALfarooq736";
+const ADMIN_PASS = "ALshABI736";
 
-// إعداد السرّ للتوكِن
-const JWT_SECRET = process.env.JWT_SECRET || 'change_this_secret_now';
+const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret_now";
 
-// Helper functions
+// =================== هيلبر ===================
 const dbFindOne = (db, q) =>
   new Promise((res, rej) => db.findOne(q, (e, d) => (e ? rej(e) : res(d))));
 const dbInsert = (db, doc) =>
@@ -40,25 +49,42 @@ const dbFind = (db, q, sort) =>
     c.exec((e, docs) => (e ? rej(e) : res(docs)));
   });
 const dbUpdate = (db, q, u, opts) =>
-  new Promise((res, rej) => db.update(q, u, opts || {}, (e, n) => (e ? rej(e) : res(n))));
+  new Promise((res, rej) =>
+    db.update(q, u, opts || {}, (e, n) => (e ? rej(e) : res(n)))
+  );
 const dbRemove = (db, q, opts) =>
-  new Promise((res, rej) => db.remove(q, opts || {}, (e, n) => (e ? rej(e) : res(n))));
+  new Promise((res, rej) =>
+    db.remove(q, opts || {}, (e, n) => (e ? rej(e) : res(n)))
+  );
 
-// Middleware لفك التوكِن
+// =================== Middleware ===================
 function auth(req, res, next) {
-  const token = req.headers['authorization'];
-  if (!token) return res.status(401).json({ error: 'Missing token' });
-  jwt.verify(token.split(' ')[1], JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid token' });
+  const token = req.headers["authorization"];
+  if (!token) return res.status(401).json({ error: "Missing token" });
+  jwt.verify(token.split(" ")[1], JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: "Invalid token" });
     req.user = user;
     next();
   });
 }
 
-// ========== المسارات ==========
+// =================== Multer للإيصالات ===================
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "receipts/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
+
+let receipts = []; // نخزن مؤقتاً (ممكن لاحقاً DB)
+
+// =================== المسارات ===================
 
 // تسجيل مستخدم جديد
-app.post('/api/register', async (req, res) => {
+app.post("/api/register", async (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password)
@@ -71,13 +97,12 @@ app.post('/api/register', async (req, res) => {
     const user = await dbInsert(usersDB, { username, password: hashed });
     res.json({ success: true, user: { id: user._id, username: user.username } });
   } catch (err) {
-    console.error("Register error:", err);
     res.status(500).json({ error: "Server error in register" });
   }
 });
 
 // تسجيل دخول
-app.post('/api/login', async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
     const user = await dbFindOne(usersDB, { username });
@@ -93,13 +118,12 @@ app.post('/api/login', async (req, res) => {
     );
     res.json({ success: true, token });
   } catch (err) {
-    console.error("Login error:", err);
     res.status(500).json({ error: "Server error in login" });
   }
 });
 
 // إضافة إعلان
-app.post('/api/ads', auth, async (req, res) => {
+app.post("/api/ads", auth, async (req, res) => {
   try {
     const { title, price } = req.body;
     if (!title || !price)
@@ -109,17 +133,16 @@ app.post('/api/ads', auth, async (req, res) => {
       title,
       price,
       userId: req.user.id,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
     res.json({ success: true, ad });
-  } catch (err) {
-    console.error("Ad insert error:", err);
+  } catch {
     res.status(500).json({ error: "Server error in ads" });
   }
 });
 
 // تعديل إعلان
-app.put('/api/ads/:id', auth, async (req, res) => {
+app.put("/api/ads/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, price } = req.body;
@@ -130,47 +153,87 @@ app.put('/api/ads/:id', auth, async (req, res) => {
       { $set: { title, price } }
     );
 
-    if (count === 0) return res.status(404).json({ error: "Ad not found or not yours" });
+    if (count === 0)
+      return res.status(404).json({ error: "Ad not found or not yours" });
     res.json({ success: true });
-  } catch (err) {
-    console.error("Ad update error:", err);
+  } catch {
     res.status(500).json({ error: "Server error in ad update" });
   }
 });
 
 // حذف إعلان
-app.delete('/api/ads/:id', auth, async (req, res) => {
+app.delete("/api/ads/:id", auth, async (req, res) => {
   try {
     const { id } = req.params;
     const count = await dbRemove(adsDB, { _id: id, userId: req.user.id });
 
-    if (count === 0) return res.status(404).json({ error: "Ad not found or not yours" });
+    if (count === 0)
+      return res.status(404).json({ error: "Ad not found or not yours" });
     res.json({ success: true });
-  } catch (err) {
-    console.error("Ad delete error:", err);
+  } catch {
     res.status(500).json({ error: "Server error in ad delete" });
   }
 });
 
 // عرض كل الإعلانات
-app.get('/api/ads', async (req, res) => {
+app.get("/api/ads", async (req, res) => {
   try {
     const ads = await dbFind(adsDB, {}, { createdAt: -1 });
     res.json(ads);
-  } catch (err) {
-    console.error("Ads fetch error:", err);
+  } catch {
     res.status(500).json({ error: "Server error in ads fetch" });
   }
 });
 
+// رفع إيصال الدفع
+app.post("/api/upload-receipt", upload.single("receipt"), (req, res) => {
+  const { username, packageType } = req.body;
+  if (!req.file)
+    return res.status(400).json({ error: "الرجاء رفع صورة الإيصال" });
+
+  const newReceipt = {
+    id: receipts.length + 1,
+    username,
+    packageType,
+    image: req.file.filename,
+    status: "pending",
+    createdAt: new Date(),
+  };
+  receipts.push(newReceipt);
+  res.json({ message: "تم رفع الإيصال بنجاح، سيتم المراجعة خلال 24 ساعة" });
+});
+
+// الأدمن يشوف الإيصالات
+app.post("/api/admin/login", (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    return res.json({ success: true, message: "تسجيل دخول ناجح كإدمن" });
+  }
+  res.status(401).json({ error: "خطأ في بيانات الدخول" });
+});
+
+app.get("/api/admin/receipts", (req, res) => {
+  res.json(receipts);
+});
+
+app.post("/api/admin/receipts/:id/status", (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const receipt = receipts.find((r) => r.id == id);
+  if (!receipt) return res.status(404).json({ error: "الإيصال غير موجود" });
+
+  receipt.status = status;
+  res.json({ message: "تم تحديث حالة الإيصال", receipt });
+});
+
 // معلومات التطبيق
-app.get('/api/info', (req, res) => {
+app.get("/api/info", (req, res) => {
   res.json({ app: APP_NAME, owner: OWNER_NAME, phone: OWNER_PHONE });
 });
 
-// تشغيل السيرفر على الشبكة
+// =================== تشغيل السيرفر ===================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Backend running on http://0.0.0.0:${PORT}`);
-  console.log("ℹ️ افتح المتصفح أو التطبيق على http://<IP_جهازك>:" + PORT);
 });
+
