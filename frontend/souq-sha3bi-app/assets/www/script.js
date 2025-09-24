@@ -1,6 +1,6 @@
 // Frontend JS for السوق الشعبي MVP (works offline using localStorage, and can call backend if configured)
 const STORAGE_KEY = 'souk_popular_listings_v1';
-const API_BASE = ''; // if you run backend, set e.g. 'http://localhost:4000'
+const API_BASE = ''; // if you run backend, set e.g. 'http://https://souq-sha3bi-backend-2.onrender.com:4000'
 const TOKEN_KEY = 'souk_token';
 
 const createBtn = document.getElementById('createBtn');

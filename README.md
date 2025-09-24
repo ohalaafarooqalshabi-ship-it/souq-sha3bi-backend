@@ -28,7 +28,7 @@ npm install
 ```bash
 node server.js
 ```
-الخادم سيعمل عادة على http://localhost:4000
+الخادم سيعمل عادة على http://https://souq-sha3bi-backend-2.onrender.com:4000
 - نقطة النهاية: `GET /api/ads` لعرض الإعلانات
 - `POST /api/ads` لإنشاء إعلان (JSON body)
 - `PUT /api/ads/:id/premium` لترقية إعلان لمدة 7 أيام
@@ -36,7 +36,7 @@ node server.js
 
 ### تشغيل الواجهة
 - افتح `frontend/index.html` في المتصفح.
-- إذا شغّلت الباك-إند، قم بتحرير `frontend/script.js` واضبط المتغير `API_BASE` إلى `http://localhost:4000` لربط الواجهة بالخادم.
+- إذا شغّلت الباك-إند، قم بتحرير `frontend/script.js` واضبط المتغير `API_BASE` إلى `http://https://souq-sha3bi-backend-2.onrender.com:4000` لربط الواجهة بالخادم.
 
 ### لوحة الإدارة
 - افتح `frontend/admin.html`

@@ -1,5 +1,5 @@
 // auth.js - handles signup and login and stores token in localStorage
-const API_BASE = ''; // set to backend URL if available, e.g., http://localhost:4000
+const API_BASE = ''; // set to backend URL if available, e.g., http://https://souq-sha3bi-backend-2.onrender.com:4000
 const toast = document.getElementById('toast');
 
 function showToast(msg, time=2200){
