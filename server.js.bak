@@ -1,6 +1,6 @@
 /**
   Backend for "السوق الشعبي"
-  - DB: @seald-io/nedb (users.db, ads.db, receipts.db)
+  - DB: @seald-io/nedb (users.db, ads.db)
   - Auth: JWT
   - Owner info embedded
 */
@@ -25,10 +25,6 @@ const usersDB = new Datastore({
 });
 const adsDB = new Datastore({
   filename: path.join(DATA_DIR, "ads.db"),
-  autoload: true,
-});
-const receiptsDB = new Datastore({
-  filename: path.join(DATA_DIR, "receipts.db"),
   autoload: true,
 });
 
@@ -72,16 +68,6 @@ function auth(req, res, next) {
   });
 }
 
-function adminAuth(req, res, next) {
-  const token = req.headers["authorization"];
-  if (!token) return res.status(401).json({ error: "Missing token" });
-  jwt.verify(token.split(" ")[1], JWT_SECRET, (err, user) => {
-    if (err || user.role !== "admin")
-      return res.status(403).json({ error: "Unauthorized" });
-    next();
-  });
-}
-
 // =================== Multer للإيصالات ===================
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -92,6 +78,8 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage });
+
+let receipts = []; // نخزن مؤقتاً (ممكن لاحقاً DB)
 
 // =================== المسارات ===================
 
@@ -106,11 +94,7 @@ app.post("/api/register", async (req, res) => {
     if (existing) return res.status(400).json({ error: "User already exists" });
 
     const hashed = await bcrypt.hash(password, 10);
-    const user = await dbInsert(usersDB, {
-      username,
-      password: hashed,
-      isBanned: false,
-    });
+    const user = await dbInsert(usersDB, { username, password: hashed });
     res.json({ success: true, user: { id: user._id, username: user.username } });
   } catch (err) {
     res.status(500).json({ error: "Server error in register" });
@@ -123,9 +107,6 @@ app.post("/api/login", async (req, res) => {
     const { username, password } = req.body;
     const user = await dbFindOne(usersDB, { username });
     if (!user) return res.status(400).json({ error: "User not found" });
-
-    if (user.isBanned)
-      return res.status(403).json({ error: "تم حظرك من استخدام التطبيق" });
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ error: "Wrong password" });
@@ -205,64 +186,44 @@ app.get("/api/ads", async (req, res) => {
 });
 
 // رفع إيصال الدفع
-app.post("/api/upload-receipt", upload.single("receipt"), async (req, res) => {
-  try {
-    const { username, packageType } = req.body;
-    if (!req.file)
-      return res.status(400).json({ error: "الرجاء رفع صورة الإيصال" });
+app.post("/api/upload-receipt", upload.single("receipt"), (req, res) => {
+  const { username, packageType } = req.body;
+  if (!req.file)
+    return res.status(400).json({ error: "الرجاء رفع صورة الإيصال" });
 
-    const newReceipt = {
-      username,
-      packageType,
-      image: req.file.filename,
-      status: "pending",
-      createdAt: new Date(),
-    };
-    const receipt = await dbInsert(receiptsDB, newReceipt);
-    res.json({
-      message: "تم رفع الإيصال بنجاح، سيتم المراجعة خلال 24 ساعة",
-      receipt,
-    });
-  } catch (err) {
-    res.status(500).json({ error: "Server error in upload receipt" });
-  }
+  const newReceipt = {
+    id: receipts.length + 1,
+    username,
+    packageType,
+    image: req.file.filename,
+    status: "pending",
+    createdAt: new Date(),
+  };
+  receipts.push(newReceipt);
+  res.json({ message: "تم رفع الإيصال بنجاح، سيتم المراجعة خلال 24 ساعة" });
 });
 
-// الأدمن يدخل
+// الأدمن يشوف الإيصالات
 app.post("/api/admin/login", (req, res) => {
   const { username, password } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
-    const token = jwt.sign({ role: "admin" }, JWT_SECRET, { expiresIn: "1d" });
-    return res.json({ success: true, token });
+    return res.json({ success: true, message: "تسجيل دخول ناجح كإدمن" });
   }
   res.status(401).json({ error: "خطأ في بيانات الدخول" });
 });
 
-// الأدمن يشوف الإيصالات
-app.get("/api/admin/receipts", adminAuth, async (req, res) => {
-  const receipts = await dbFind(receiptsDB, {}, { createdAt: -1 });
+app.get("/api/admin/receipts", (req, res) => {
   res.json(receipts);
 });
 
-// الأدمن يغير حالة إيصال
-app.post("/api/admin/receipts/:id/status", adminAuth, async (req, res) => {
+app.post("/api/admin/receipts/:id/status", (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  const count = await dbUpdate(receiptsDB, { _id: id }, { $set: { status } });
-  if (count === 0) return res.status(404).json({ error: "الإيصال غير موجود" });
-  res.json({ message: "تم تحديث حالة الإيصال" });
-});
+  const receipt = receipts.find((r) => r.id == id);
+  if (!receipt) return res.status(404).json({ error: "الإيصال غير موجود" });
 
-// الأدمن يحظر مستخدم
-app.post("/api/admin/ban-user", adminAuth, async (req, res) => {
-  const { username } = req.body;
-  const count = await dbUpdate(
-    usersDB,
-    { username },
-    { $set: { isBanned: true } }
-  );
-  if (count === 0) return res.status(404).json({ error: "المستخدم غير موجود" });
-  res.json({ message: "تم حظر المستخدم" });
+  receipt.status = status;
+  res.json({ message: "تم تحديث حالة الإيصال", receipt });
 });
 
 // معلومات التطبيق
@@ -274,4 +235,5 @@ app.get("/api/info", (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Backend running on http://0.0.0.0:${PORT}`);
-}); 
+});
+

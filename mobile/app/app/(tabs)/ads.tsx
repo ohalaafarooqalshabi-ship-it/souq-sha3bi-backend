@@ -25,7 +25,7 @@ export default function AdsScreen() {
   // 🔹 جلب البيانات من API
   const fetchAds = () => {
     setRefreshing(true);
-    fetch("http://192.168.1.100:5000/api/ads") // ← غيّر الـ IP حسب سيرفرك
+    fetch("https://souq-sha3bi-backend-2.onrender.com/api/ads") // ✅ رابط السيرفر الصحيح
       .then((res) => res.json())
       .then((data) => {
         setAds(data);
