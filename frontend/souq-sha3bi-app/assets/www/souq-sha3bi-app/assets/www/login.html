@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>تسجيل الدخول - السوق الشعبي</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="auth.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header><h2>تسجيل الدخول</h2></header>
+    <main>
+      <section class="card panel">
+        <label>البريد الإلكتروني</label>
+        <input id="email" type="email" />
+        <label>كلمة المرور</label>
+        <input id="password" type="password" />
+        <div style="margin-top:10px">
+          <button class="btn" id="loginBtn">دخول</button>
+          <a href="signup.html" style="margin-right:10px" class="muted">إنشاء حساب</a>
+        </div>
+        <div id="msg" class="muted" style="margin-top:10px"></div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast"></div>
+</body>
+</html>

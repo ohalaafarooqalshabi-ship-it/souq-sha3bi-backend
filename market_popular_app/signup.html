@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>إنشاء حساب - السوق الشعبي</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="auth.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header><h2>إنشاء حساب جديد</h2></header>
+    <main>
+      <section class="card panel">
+        <label>الاسم الكامل</label>
+        <input id="name" type="text" />
+        <label>البريد الإلكتروني</label>
+        <input id="email" type="email" />
+        <label>رقم الهاتف (اختياري)</label>
+        <input id="phone" type="text" />
+        <label>كلمة المرور</label>
+        <input id="password" type="password" />
+        <div style="margin-top:10px">
+          <button class="btn" id="signupBtn">إنشاء حساب</button>
+          <a href="login.html" style="margin-right:10px" class="muted">لدي حساب بالفعل</a>
+        </div>
+        <div id="msg" class="muted" style="margin-top:10px"></div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast"></div>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>السوق الشعبي — نسخة ويب MVP</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <div class="container" aria-live="polite">
+    <header>
+      <div class="brand">
+        <div class="logo">شع</div>
+        <div>
+          <h1>السوق الشعبي</h1>
+          <p class="lead">إعلانات مبوّبة محلية — نسخة ويب MVP</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <input id="searchInput" class="search" placeholder="ابحث عن سلعة أو وصف..." aria-label="بحث"/>
+        <div class="filters">
+          <select id="cityFilter" class="search" aria-label="فلتر المدينة">
+            <option value="">كل المدن</option>
+          </select>
+          <button class="btn" id="createBtn">+ نشر إعلان</button>
+          <button class="btn secondary" id="aboutBtn">حول التطبيق</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- side: form / create -->
+      <aside class="card" id="sidePanel">
+        <div id="formView">
+          <h3 style="margin-top:0">أنشئ إعلان جديد</h3>
+          <form id="createForm" autocomplete="off">
+            <div class="row"><div style="flex:1"><label>العنوان</label><input required id="title" type="text" /></div></div>
+            <div class="row"><div style="flex:1"><label>الوصف</label><textarea id="description"></textarea></div></div>
+            <div class="row">
+              <div style="flex:1"><label>السعر (USD)</label><input id="price" type="number" step="0.01" /></div>
+              <div style="width:140px"><label>المدينة</label><input id="city" type="text" /></div>
+            </div>
+            <div>
+              <label>صور (اختياري)</label>
+              <input id="imagesInput" type="file" accept="image/*" multiple />
+              <div class="thumbs" id="thumbs"></div>
+            </div>
+
+            <div style="margin-top:10px; display:flex; gap:8px">
+              <button class="btn" type="submit">نشر الإعلان</button>
+              <button class="btn secondary" id="clearBtn" type="button">مسح الحقول</button>
+            </div>
+            <p class="muted" style="margin-top:10px;font-size:12px">يمكنك ترقية الإعلان لاحقًا ليصبح مميزًا لفترة.</p>
+          </form>
+        </div>
+
+        <div id="aboutView" style="display:none">
+          <h3>حول التطبيق</h3>
+          <p class="muted">
+            السوق الشعبي © جميع الحقوق محفوظة.<br>
+            مالك التطبيق: <strong>علاء فاروق سيف علوان الشعبي</strong><br>
+            للتواصل: <strong>777268793</strong>
+          </p>
+          <p style="margin:10px 0"><strong>نسخة تجريبية:</strong></p>
+          <ul class="muted">
+            <li>هذه نسخة ويب MVP لتجربة فكرة السوق المحلي.</li>
+            <li>لتوصيلها بباك-إند فعّال: شغّل مجلد backend في المشروع.</li>
+          </ul>
+          <div style="margin-top:12px"><button class="btn" id="backToForm">العودة</button></div>
+        </div>
+      </aside>
+
+      <!-- main: listings -->
+      <section>
+        <div class="panel">
+          <div class="list-header">
+            <div><strong id="totalCount">0</strong> إعلان متوفر</div>
+            <div class="muted">ترتيب: الإعلانات المميزة تظهر أولاً</div>
+          </div>
+
+          <div class="cards" id="cardsContainer" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="card footer">
+      <div>صنع بفخر — <strong>علاء فاروق سيف علوان الشعبي</strong> • للتواصل: 777268793</div>
+      <div class="muted">نسخة MVP — محرّك البحث، الترقية والدفع محاكى محليًا</div>
+    </footer>
+  </div>
+
+  <!-- simple modal for messages -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
